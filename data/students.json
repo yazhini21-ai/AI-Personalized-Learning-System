@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Rahul",
+    "attendance": 90.0,
+    "study_hours": 5.0,
+    "subjects": [
+      "AI",
+      "Math",
+      "Python"
+    ],
+    "marks": [
+      85.0,
+      60.0,
+      90.0
+    ]
+  }
+]
