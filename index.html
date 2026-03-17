@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Student Performance Predictor</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="brand">
+        <h1>AI Student Performance Predictor</h1>
+        <p>Enter marks and let AI suggest the right learning path.</p>
+      </div>
+
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+        <span class="toggle-icon" aria-hidden="true">🌙</span>
+        <span class="toggle-label">Dark Mode</span>
+      </button>
+    </header>
+
+    <main class="layout">
+      <section class="card form-card" aria-label="Student performance form">
+        <h2>Predict Performance</h2>
+
+        <form id="predictForm" class="form" autocomplete="off">
+          <label class="field">
+            <span>Student Name</span>
+            <input type="text" id="studentName" name="studentName" placeholder="e.g. Sara Khan" required />
+          </label>
+
+          <label class="field">
+            <span>Subject</span>
+            <input type="text" id="subject" name="subject" placeholder="e.g. Mathematics" required />
+          </label>
+
+          <label class="field">
+            <span>Marks (0–100)</span>
+            <input type="number" id="marks" name="marks" min="0" max="100" placeholder="e.g. 78" required />
+          </label>
+
+          <div class="actions">
+            <button type="submit" id="predictBtn" class="primary-btn">Predict Performance</button>
+          </div>
+        </form>
+
+        <div id="spinner" class="spinner hidden" role="status" aria-live="polite">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <span class="sr-only">Loading results...</span>
+        </div>
+
+        <div id="resultCard" class="result-card hidden" aria-live="polite">
+          <div class="result-header">
+            <h3 id="performanceTitle"></h3>
+            <p id="performanceSubtitle"></p>
+          </div>
+
+          <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+
+          <div class="result-body">
+            <p id="performanceMessage"></p>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="marksChart" aria-label="Marks chart" role="img"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card info-card">
+        <h2>How it works</h2>
+        <ul>
+          <li>Enter a student's name, subject, and marks.</li>
+          <li>Click <strong>Predict Performance</strong>.</li>
+          <li>See AI guidance and an interactive chart.</li>
+        </ul>
+        <p class="tip"><strong>Tip:</strong> Try all mark ranges to see different outcomes.</p>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <p>Built with HTML, CSS, and JavaScript • Chart.js for visualization</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
