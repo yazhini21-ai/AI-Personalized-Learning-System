@@ -53,8 +53,14 @@
 
           <label class="field">
             <span>Upload Syllabus</span>
-            <input type="file" id="syllabusFile" accept=".txt,.pdf" required />
-            <span class="file-hint">(Required, .txt or .pdf)</span>
+            <input type="file" id="syllabusFile" accept=".txt,.pdf" />
+            <span class="file-hint">(Optional, .txt or .pdf)</span>
+          </label>
+
+          <label class="field">
+            <span>Or paste syllabus text</span>
+            <textarea id="syllabusText" rows="6" placeholder="Paste syllabus text here (optional)"></textarea>
+            <span class="file-hint">If you paste text, file upload is not required.</span>
           </label>
 
           <p id="fileError" class="file-error hidden" role="alert"></p>
@@ -103,6 +109,9 @@
             <div class="notes" aria-label="Generated notes">
               <h4>Generated Notes</h4>
               <ul id="generatedNotes" class="notes-list"></ul>
+
+              <h4>Important Questions</h4>
+              <ul id="importantQuestions" class="notes-list"></ul>
             </div>
           </div>
 

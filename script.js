@@ -3,6 +3,7 @@ const studentNameInput = document.getElementById("studentName");
 const subjectInput = document.getElementById("subject");
 const marksInput = document.getElementById("marks");
 const syllabusFileInput = document.getElementById("syllabusFile");
+const syllabusTextInput = document.getElementById("syllabusText");
 
 const predictBtn = document.getElementById("predictBtn");
 const spinner = document.getElementById("spinner");
@@ -13,6 +14,7 @@ const studentNameResult = document.getElementById("studentNameResult");
 const subjectResult = document.getElementById("subjectResult");
 const marksResult = document.getElementById("marksResult");
 const generatedNotes = document.getElementById("generatedNotes");
+const importantQuestions = document.getElementById("importantQuestions");
 const progressBar = document.getElementById("progressBar");
 const outputDiv = document.getElementById("output");
 const themeToggle = document.getElementById("themeToggle");
@@ -130,7 +132,8 @@ async function readPdfFile(file) {
   return pageTexts.join("\n");
 }
 
-async async function readSyllabusContent(file) {
+async function readSyllabusContent(file) {
+  console.log("readSyllabusContent", file?.name);
   const name = file.name.toLowerCase();
   if (name.endsWith(".txt")) {
     return await readTextFile(file);
@@ -151,42 +154,58 @@ function parseSyllabusLines(rawText) {
     .filter((line) => line.length > 0);
 }
 
+function getImportantQuestions(lines) {
+  const topics = lines
+    .filter((line) => !/UNIT/i.test(line))
+    .map((line) => line.replace(/\s*\d+\.?\s*/, ""))
+    .filter((line) => line.length > 3)
+    .slice(0, 5);
+
+  const templates = [
+    (t) => `What is ${t}?`,
+    (t) => `Explain ${t}.`,
+    (t) => `Define ${t}.`,
+  ];
+
+  return topics.flatMap((topic, index) => {
+    const template = templates[index % templates.length];
+    return template(topic);
+  });
+}
+
 function buildNotesFromLines(lines, score, subject) {
-  const maxItems = score < 40 ? 3 : score <= 75 ? 5 : 8;
-  const notes = lines.slice(0, maxItems);
-
-  if (notes.length >= maxItems) {
-    return notes;
-  }
-
   const topic = subject || "the subject";
-  const fallback = [];
+
+  // Extract topic candidates from syllabus lines (ignore lines containing UNIT)
+  const topics = lines
+    .filter((line) => !/UNIT/i.test(line))
+    .map((line) => line.replace(/\s*\d+\.?\s*/, ""))
+    .filter((line) => line.length > 3)
+    .slice(0, 4);
+
+  const topicList = topics.length ? topics.join(", ") : "key topics";
 
   if (score < 40) {
-    fallback.push(
-      `Focus on core ${topic} concepts with short practice sets.`,
-      `Work through important questions for ${topic} to build confidence.`,
-      `Identify weak areas and revisit foundational material step-by-step.`
-    );
-  } else if (score <= 75) {
-    fallback.push(
-      `Review key ${topic} points and summarize concepts in your own words.`,
-      `Use simplified notes and flashcards to reinforce understanding.`,
-      `Practice moderate-difficulty problems to build consistency.`,
-      `Build quick reference notes for ${topic} and revise them regularly.`,
-      `Try simple past questions for ${topic} to reinforce learning.`
-    );
-  } else {
-    fallback.push(
-      `Explore advanced ${topic} topics and challenge yourself with harder problems.`,
-      `Create comprehensive notes and try teaching concepts to someone else.`,
-      `Attempt project-style questions to deepen your mastery of ${topic}.`,
-      `Compare solutions and optimize your approach to ${topic} problems.`,
-      `Research recent trends in ${topic} and apply them in practice.`
-    );
+    return [
+      `Focus on fundamentals of ${topic}.`,
+      `Study key topics like ${topicList}.`,
+      `Revise daily and practice simple questions.`,
+    ];
   }
 
-  return [...notes, ...fallback].slice(0, maxItems);
+  if (score <= 75) {
+    return [
+      `Understand concepts like ${topicList}.`,
+      `Practice previous questions to build confidence.`,
+      `Improve problem-solving skills with regular exercises.`,
+    ];
+  }
+
+  return [
+    `Master advanced topics in ${topic}.`,
+    `Explore real-world applications of ${topic}.`,
+    `Work on complex problems to challenge yourself.`,
+  ];
 }
 
 function formatTitle(score) {
@@ -250,7 +269,7 @@ function updateChart({ subject, score }) {
   });
 }
 
-function updateResult({ name, subject, score, notes, category }) {
+function updateResult({ name, subject, score, notes, category, questions = [] }) {
   performanceTitle.textContent = category;
   performanceSubtitle.textContent = formatSubtitle(score, name, subject);
   studentNameResult.textContent = name;
@@ -259,6 +278,9 @@ function updateResult({ name, subject, score, notes, category }) {
 
   lastGeneratedNotes = notes.slice();
   generatedNotes.innerHTML = notes.map((note) => `<li>${note}</li>`).join("");
+
+  importantQuestions.innerHTML = questions.map((q) => `<li>${q}</li>`).join("");
+
   progressBar.style.width = computeProgressWidth(score);
 
   updateChart({ subject, score });
@@ -317,6 +339,13 @@ function setFormEnabled(enabled) {
 async function handleFileChange() {
   showFileError("");
   const file = syllabusFileInput.files[0];
+
+  // If the user has pasted text, keep it and show it
+  if (syllabusTextInput.value.trim().length > 0) {
+    showPreview(syllabusTextInput.value.trim());
+    return;
+  }
+
   if (!file) {
     showPreview("");
     return;
@@ -346,18 +375,20 @@ async function handleSubmit(event) {
   const subject = subjectInput.value.trim();
   const marks = marksInput.value.trim();
   const file = syllabusFileInput.files[0];
+  const pastedSyllabus = syllabusTextInput.value.trim();
 
   if (!name || !subject || marks === "" || isNaN(Number(marks))) {
     alert("Please fill out all fields with valid values.");
     return;
   }
 
-  if (!file) {
-    alert("Please upload a syllabus file (.txt or .pdf) before generating notes.");
+  // Require either pasted text or a file upload
+  if (!pastedSyllabus && !file) {
+    alert("Please provide a syllabus: either paste text or upload a .txt/.pdf file.");
     return;
   }
 
-  if (file.name.toLowerCase().endsWith(".pdf") && !window.pdfjsLib) {
+  if (file && file.name.toLowerCase().endsWith(".pdf") && !window.pdfjsLib) {
     alert("PDF.js library not loaded. Please make sure the PDF.js script is available.");
     return;
   }
@@ -372,10 +403,14 @@ async function handleSubmit(event) {
   showSpinner();
 
   try {
-    const rawSyllabus = await readSyllabusContent(file);
-    const lines = parseSyllabusLines(rawSyllabus);
+    const syllabusSource = pastedSyllabus || (await readSyllabusContent(file));
+    showPreview(syllabusSource);
+
+    const lines = parseSyllabusLines(syllabusSource);
     const notes = buildNotesFromLines(lines, numericMarks, subject);
     const category = formatTitle(numericMarks);
+
+    const questions = numericMarks < 40 ? getImportantQuestions(lines) : [];
 
     updateResult({
       name,
@@ -383,19 +418,14 @@ async function handleSubmit(event) {
       score: numericMarks,
       notes,
       category,
-    });
-
-    displayOutput({
-      name,
-      subject,
-      marks: numericMarks,
-      notes,
-      category,
+      questions,
     });
   } catch (err) {
+    console.error(err);
     alert(err.message);
   } finally {
     setFormEnabled(true);
+    hideSpinner();
   }
 }
 
@@ -412,6 +442,15 @@ window.generatePrediction = function () {
 
 predictBtn.addEventListener("click", handleSubmit);
 syllabusFileInput.addEventListener("change", handleFileChange);
+syllabusTextInput.addEventListener("input", () => {
+  showFileError("");
+  const value = syllabusTextInput.value.trim();
+  if (value) {
+    showPreview(value);
+  } else if (!syllabusFileInput.files[0]) {
+    showPreview("");
+  }
+});
 downloadNotesBtn.addEventListener("click", downloadNotes);
 
 themeToggle.addEventListener("click", () => {
