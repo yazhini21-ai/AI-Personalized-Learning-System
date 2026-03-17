@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Student Performance Predictor</title>
+  <title>AI Student Performance Predictor & Notes Generator</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,6 +12,8 @@
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- PDF.js (optional for PDF syllabus extraction) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.16.135/pdf.min.js"></script>
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -19,8 +21,8 @@
   <div class="page">
     <header class="header">
       <div class="brand">
-        <h1>AI Student Performance Predictor</h1>
-        <p>Enter marks and let AI suggest the right learning path.</p>
+        <h1>AI-Based Performance Predictor & Notes Generator</h1>
+        <p>Enter student details to generate tailored guidance, notes, and charts.</p>
       </div>
 
       <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
@@ -41,8 +43,26 @@
 
           <label class="field">
             <span>Subject</span>
-            <input type="text" id="subject" name="subject" placeholder="e.g. Mathematics" required />
+            <select id="subject" name="subject" required>
+              <option value="" disabled selected>Select a subject</option>
+              <option value="AI">AI</option>
+              <option value="Machine Learning">Machine Learning</option>
+              <option value="Data Science">Data Science</option>
+            </select>
           </label>
+
+          <label class="field">
+            <span>Upload Syllabus</span>
+            <input type="file" id="syllabusFile" accept=".txt,.pdf" required />
+            <span class="file-hint">(Required, .txt or .pdf)</span>
+          </label>
+
+          <p id="fileError" class="file-error hidden" role="alert"></p>
+
+          <div id="syllabusPreview" class="syllabus-preview hidden">
+            <h4>Syllabus preview</h4>
+            <pre id="syllabusContent"></pre>
+          </div>
 
           <label class="field">
             <span>Marks (0–100)</span>
@@ -50,9 +70,11 @@
           </label>
 
           <div class="actions">
-            <button type="submit" id="predictBtn" class="primary-btn">Predict Performance</button>
+            <button type="button" id="predictBtn" class="primary-btn" onclick="generatePrediction()">Predict &amp; Generate Notes</button>
           </div>
         </form>
+
+        <div id="output" class="output-card hidden"></div>
 
         <div id="spinner" class="spinner hidden" role="status" aria-live="polite">
           <div class="dot"></div>
@@ -72,11 +94,24 @@
           </div>
 
           <div class="result-body">
-            <p id="performanceMessage"></p>
+            <div class="result-info">
+              <p><strong>Name:</strong> <span id="studentNameResult"></span></p>
+              <p><strong>Subject:</strong> <span id="subjectResult"></span></p>
+              <p><strong>Marks:</strong> <span id="marksResult"></span>/100</p>
+            </div>
+
+            <div class="notes" aria-label="Generated notes">
+              <h4>Generated Notes</h4>
+              <ul id="generatedNotes" class="notes-list"></ul>
+            </div>
           </div>
 
           <div class="chart-container">
             <canvas id="marksChart" aria-label="Marks chart" role="img"></canvas>
+          </div>
+
+          <div class="actions result-actions">
+            <button id="downloadNotes" type="button" class="secondary-btn">Download Notes</button>
           </div>
         </div>
       </section>
@@ -84,9 +119,9 @@
       <aside class="card info-card">
         <h2>How it works</h2>
         <ul>
-          <li>Enter a student's name, subject, and marks.</li>
-          <li>Click <strong>Predict Performance</strong>.</li>
-          <li>See AI guidance and an interactive chart.</li>
+          <li>Enter a student's name, select a subject, and provide marks.</li>
+          <li>Click <strong>Predict &amp; Generate Notes</strong>.</li>
+          <li>See AI guidance, notes, and an interactive chart.</li>
         </ul>
         <p class="tip"><strong>Tip:</strong> Try all mark ranges to see different outcomes.</p>
       </aside>
